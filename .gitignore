@@ -1,0 +1,10 @@
+# dependencies
+node_modules
+.npm
+
+lib
+.env
+
+out
+
+coverage/
