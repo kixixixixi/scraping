@@ -84,21 +84,26 @@ export const getTextByXPath = async ({
   xpath: string
   pattern?: string
   attribute?: string
-}): Promise<string | null> => {
-  const selector = await page.waitForSelector(`::-p-xpath(${xpath})`, {
-    timeout: 5000,
-  })
-  if (!selector) return null
-  const content = await selector.evaluate(
-    (el, attribute) =>
-      !!attribute ? el.getAttribute(attribute) : el.textContent,
-    attribute
+}): Promise<(string | null)[] | undefined> => {
+  const selectorList = await page.$$(`::-p-xpath(${xpath})`)
+  if (selectorList.length == 0) return
+  const contentList = await Promise.all(
+    selectorList.map((selector) =>
+      selector.evaluate(
+        (el, attribute) =>
+          !!attribute ? el.getAttribute(attribute) : el.textContent,
+        attribute
+      )
+    )
   )
-  if (!content) return null
+
+  if (contentList.length == 0) return
   if (pattern) {
-    const matched = content.match(new RegExp(pattern))
-    if (!matched || matched.length < 1) return content
-    return matched[1]
+    return contentList.map((content) => {
+      const matched = content?.match(new RegExp(pattern))
+      if (!matched || matched.length < 1) return content
+      return matched[1]
+    })
   }
-  return content
+  return contentList
 }
